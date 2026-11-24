@@ -1,0 +1,51 @@
+THE PERFECT PICTURE — bản 2 (tiếng Anh, 3D)
+=============================================
+
+CÁCH CHẠY
+  Nhấp đúp "index.html" (Chrome/Edge) hoặc "ChoiGame.bat". Không cần cài đặt, không cần mạng.
+
+ĐIỀU KHIỂN (trong game)
+  WASD di chuyển · Shift chạy · Chuột nhìn
+  E / Chuột trái: tương tác (nhặt, đặt, mở...)
+  Giữ chuột trái + rê chuột: chà/lau (giẻ, cây lau nhà). Giữ chuột trái: quét (chổi)
+  1-3 hoặc lăn chuột: chọn ô trong túi đồ (cầm tối đa 3 món, dụng cụ cũng chiếm ô)
+  G: thả đồ (rơi theo vật lý) · Chuột phải / F: ném đồ
+  M: bản đồ · Tab: tiến độ từng phòng · P: mảnh ảnh (Phase 2) · Esc: tạm dừng / đóng bảng
+
+GIAO DIỆN
+  Màn hình chỉ còn bản đồ nhỏ và túi đồ 3 ô. Muốn xem giờ thì đến đồng hồ quả lắc ở hành lang
+  (hoặc đồng hồ treo tường trong bếp) và bấm E. Kim đồng hồ chạy theo giờ trong game.
+  Ném rác trúng thùng rác hoặc ném quần áo trúng giỏ giặt thì được tính là đã bỏ vào.
+  Đứng trước thùng rác bấm E sẽ bỏ hết rác đang cầm vào thùng.
+
+BẢN ĐỒ NHÀ MỚI
+  Cánh phòng ngủ phía bắc (phòng bố mẹ, phòng tắm, phòng bạn, phòng làm việc của bố) nối với hành lang.
+  Cuối hành lang là KHO DỤNG CỤ (giẻ, chổi, cây lau, túi rác).
+  Hành lang mở ra phòng khách. Từ phòng khách đi sang SẢNH, nơi có CỬA CHÍNH, và sang phòng giặt.
+  Phòng khách thông với phòng ăn, phòng ăn thông với bếp. CỬA SAU ở bếp dẫn ra sân sau, thùng rác đặt ngay ngoài cửa.
+
+CÁCH DỌN DẸP MỚI
+  - Nhặt đồ rồi mang về đúng chỗ: sách lên kệ, quần áo vào giỏ giặt, thư vào khay ở sảnh,
+    gối lên sofa, hộp vào tủ hành lang, giày lên kệ giày, khăn sạch lên giá khăn...
+  - Rác và chai: mang từng cái tới thùng, hoặc dùng Túi rác (gom được 10 món) rồi đổ ở thùng.
+  - Thùng rác trong bếp đầy thì nhấc túi rác ra, mang qua cửa sau bỏ vào thùng ngoài sân.
+  - Bát đĩa: mang tới bồn rửa, chơi minigame rửa từng đĩa.
+  - Bụi: chà bằng giẻ. Đất cát: đẩy bằng chổi. Vết bẩn trên sàn bếp: lau bằng cây lau nhà.
+  - Dọn giường: ấn vào 4 góc giường để gấp chăn.
+
+ĐỒ HỌA / HIỆU NĂNG
+  Menu > Settings > Graphics: chế độ Auto tự hạ độ phân giải khi máy giật.
+  Low là nhanh nhất. Có thể bật bộ đếm FPS để kiểm tra.
+
+CHỈNH SỬA
+  js/story.js   lời thoại và 21 kết thúc (tiếng Anh)
+  js/world.js   bản đồ ngôi nhà
+  js/game.js    gameplay; mục CFG ở đầu file để chỉnh cân bằng
+  js/engine.js  engine đồ họa
+
+  Ghi chú: Memory Ending vẫn là phiên bản đã điều chỉnh (không có cảnh tự sát), giống bản trước.
+
+CÔNG THỨC BÁNH
+  Nằm trong ngăn kéo tủ bếp, ngay bên phải bếp nấu (tường phía bắc của bếp).
+  Có một mảnh giấy màu hồng thò ra khỏi ngăn kéo; nhắm vào đó và bấm E.
+  Có ngay từ đầu, không cần dọn bếp trước.

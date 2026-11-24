@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Perfect Picture</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="vignette"></div>
+<div id="grain"></div>
+<div id="tint"></div>
+
+<!-- ============ HUD: only the map + 3-slot inventory ============ -->
+<div id="minimap" class="hidden"><canvas id="minimapc" width="210" height="140"></canvas><div id="roomname"></div><div class="mmk">M · map</div></div>
+<div id="details" class="hidden"></div>
+<div id="cross" class="hidden"></div>
+<div id="prompt" class="hidden"></div>
+<div id="progress" class="hidden"><div id="plabel"></div><div class="bar"><div id="pfill"></div></div></div>
+<div id="ovenhud" class="hidden"></div>
+<div id="inv" class="hidden"><div id="invslots"></div><div id="invhint"></div></div>
+<div id="toasts"></div>
+<div id="lockhint" class="hidden">🖱 Click to take control</div>
+<div id="fps" style="display:none"></div>
+<div id="bigmap" class="hidden"><div class="bmcard"><div class="bmt">MAP <span>· M or Esc to close</span></div><canvas id="bigmapc" width="900" height="600"></canvas></div></div>
+
+<!-- ============ Dialogue / overlays ============ -->
+<div id="dialog" class="hidden"><div id="dname"></div><div id="dtext"></div><div id="dnext">▼ Space</div></div>
+<div id="choices" class="hidden"><div id="cq"></div><div id="clist"></div></div>
+<div id="overlay" class="hidden"><div id="ocard"></div></div>
+<div id="qte" class="hidden"><button id="qbtn">GRAB DAD!</button><div class="qbar"><div id="qtime"></div></div></div>
+<div id="fade"><div id="ftitle"></div><div id="fsub"></div></div>
+
+<!-- ============ MAIN MENU ============ -->
+<div id="menu">
+  <div class="mleft">
+    <div class="polaroid">
+      <div class="pphoto">
+        <div class="tear t1"></div><div class="tear t2"></div><div class="tear t3"></div>
+        <div class="ptitle"><span>THE</span>PERFECT<br>PICTURE</div>
+      </div>
+      <div class="pcap">our family ♡</div>
+    </div>
+    <div class="mtag">Some pictures can't be perfect. But they can be complete.</div>
+    <div id="mphase">PHASE 1</div>
+    <div class="mbtns">
+      <button class="mbtn primary" id="bPlay"><span>▶</span> New Game</button>
+      <button class="mbtn" id="bGallery"><span>◈</span> Endings <em id="mcount">0/21</em></button>
+      <button class="mbtn" id="bHelp"><span>?</span> How to Play</button>
+      <button class="mbtn" id="bSettings"><span>⚙</span> Settings</button>
+    </div>
+    <div class="mprog"><div class="mprogl">ENDINGS FOUND</div><div class="mprogb"><div id="mbar"></div></div></div>
+    <div class="mfoot">Psychological story game · 13+ · Headphones recommended</div>
+  </div>
+</div>
+
+<div id="warn" class="panel hidden">
+  <div class="pcard">
+    <h2>Before you play</h2>
+    <p>This game deals with <b>the death of a parent, grief, memory loss, alcohol abuse, family conflict</b>, non-graphic violence and a house fire. It is intended for players aged 13+.</p>
+    <p class="small">If any of these topics are hard for you right now, it's okay to come back later.</p>
+    <button class="btn" id="wOk">I understand — start</button>
+  </div>
+</div>
+
+<div id="gallery" class="panel hidden">
+  <div class="pcard wide">
+    <h2>Endings</h2><div id="gcount" class="small"></div>
+    <div id="glist"></div>
+    <button class="btn" id="gclose">Back</button>
+  </div>
+</div>
+
+<div id="help" class="panel hidden">
+  <div class="pcard">
+    <h2>How to play</h2>
+    <p>3 AM on your parents' wedding anniversary, Dad wakes you up and asks you to clean the house. He leaves at <b>6:00 AM</b> and comes back at <b>5:00 PM</b>.</p>
+    <div class="keys">
+      <div><b>WASD</b> move · <b>Shift</b> run · <b>Mouse</b> look</div>
+      <div><b>E / Left click</b> interact · <b>Hold LMB + move mouse</b> scrub</div>
+      <div><b>1–3 / Mouse wheel</b> select inventory slot · <b>G</b> drop · <b>Right click / F</b> throw</div>
+      <div><b>M</b> map · <b>Tab</b> progress · <b>P</b> photo pieces · <b>Esc</b> pause</div>
+    </div>
+    <ul>
+      <li>You can carry <b>3 things</b> at once — tools take a slot too. Get the rag, broom, mop and trash bags from the <b>Storage room</b> at the end of the hallway.</li>
+      <li>There is no clock on screen. Check the <b>grandfather clock in the hallway</b> (or the kitchen clock) to see the time.</li>
+      <li>Drop or <b>throw</b> things — a throw that lands in a trash bin or the laundry basket counts! Press E at a bin to dump everything you carry into it.</li>
+      <li><b>Pick up</b> clutter and carry it where it belongs: books on the shelf, clothes in the laundry basket, mail in the foyer tray, dishes in the sink...</li>
+      <li>The <b>Trash Bag</b> holds 10 pieces of trash. The kitchen bin fills up — take its bag to the <b>bins outside</b> (kitchen back door).</li>
+      <li>Wipe dust with the <b>Rag</b>, push dirt away with the <b>Broom</b>, scrub stains with the <b>Mop</b>.</li>
+      <li>You <b>can't</b> do everything in time. Prioritise!</li>
+      <li>Clean half the kitchen to find Mom's cake recipe. Don't leave it in the oven too long...</li>
+      <li>There are <b>21 endings</b>. After 7 different ones, a secret is revealed.</li>
+    </ul>
+    <button class="btn" id="hclose">Back</button>
+  </div>
+</div>
+
+<div id="settings" class="panel hidden">
+  <div class="pcard">
+    <h2>Settings</h2>
+    <div class="stabs"><button class="stab on" data-p="g">Graphics</button><button class="stab" data-p="a">Audio & Controls</button><button class="stab" data-p="d">Developer</button></div>
+    <div class="spage" data-p="g">
+      <label>Quality
+        <select id="setQuality"><option value="auto">Auto (adapts to your PC)</option><option value="low">Low (fastest)</option><option value="medium">Medium</option><option value="high">High</option></select>
+      </label>
+      <label>Field of view <span><input type="range" id="setFov" min="60" max="95" step="1"> <i id="fovVal"></i></span></label>
+      <label class="chk"><input type="checkbox" id="setGrain"> Film grain</label>
+      <label class="chk"><input type="checkbox" id="setAA"> Anti-aliasing (needs page reload)</label>
+      <label class="chk"><input type="checkbox" id="setFps"> Show FPS counter</label>
+    </div>
+    <div class="spage hidden" data-p="a">
+      <label>Volume <input type="range" id="setVol" min="0" max="1" step="0.05"></label>
+      <label>Mouse sensitivity <input type="range" id="setSens" min="0.3" max="2.5" step="0.1"></label>
+      <label class="chk"><input type="checkbox" id="setInvert"> Invert mouse Y</label>
+      <label>Time speed
+        <select id="setSpeed"><option value="1">1x (standard ≈ 22 min)</option><option value="2">2x</option><option value="4">4x (testing)</option></select>
+      </label>
+    </div>
+    <div class="spage hidden" data-p="d">
+      <label class="chk"><input type="checkbox" id="setEaster"> Always trigger "Wrong Day Ending" (instead of 2%)</label>
+      <div class="row2"><button class="btn sm" id="bUnlock2">Unlock Phase 2</button><button class="btn sm danger" id="bReset">Erase progress</button></div>
+      <p class="small">Tip: sleeping in your own bed skips to 5 PM.</p>
+    </div>
+    <button class="btn" id="sclose">Back</button>
+  </div>
+</div>
+
+<div id="pause" class="panel hidden">
+  <div class="pcard narrow">
+    <h2>Paused</h2>
+    <button class="btn" id="pResume">Resume</button>
+    <button class="btn" id="pSettings">Settings</button>
+    <button class="btn" id="pMenu">Quit to main menu</button>
+  </div>
+</div>
+
+<div id="ending" class="hidden">
+  <div class="ebox">
+    <div id="ebig">ENDING #1</div>
+    <div id="estar"></div>
+    <div id="etitle">Ending</div>
+    <div id="esub"></div>
+    <div id="ecount"></div>
+    <button class="btn" id="enext">Continue</button>
+  </div>
+</div>
+
+<div id="err"></div>
+
+<script src="js/engine.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/world.js"></script>
+<script src="js/story.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
