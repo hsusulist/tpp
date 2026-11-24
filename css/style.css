@@ -165,3 +165,9 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 #invhint { font-size: 12px; opacity: .6; min-height: 15px; text-shadow: 0 1px 3px #000; }
 #objective, #hud { display: none !important; }
 #minimap { top: 14px; right: 14px; }
+
+/* ---------- cinematic ---------- */
+#lbTop, #lbBot { position: fixed; left: 0; right: 0; height: 0; background: #000; z-index: 71; transition: height 1.1s ease; pointer-events: none; }
+#lbTop { top: 0; } #lbBot { bottom: 0; }
+#lbTop.on, #lbBot.on { height: 11vh; }
+#flash { position: fixed; inset: 0; background: #fff8ec; opacity: 0; pointer-events: none; z-index: 74; }

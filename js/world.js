@@ -416,9 +416,10 @@ const World = (function () {
   // ---------- characters ----------
   // Built facing +z, feet at y = 0. Sitting pose assumes a seat at y ≈ 0.45.
   function person(opt) {
-    const skin = opt.skin || C(0xd2a07a), skinD = C(0xb98762), shirt = opt.shirt || C(0x6f86a0), shirtD = C(0x56697e);
+    const skin = opt.skin || C(0xd2a07a), skinD = C(0xb98762), shirt = opt.shirt || C(0x6f86a0), shirtD = shirt.map(v => v * 0.78);
     const pants = opt.pants || C(0x2e3138), shoe = C(0x1e1a17), hair = opt.hair || C(0x2b2119), grey = C(0x5a5048);
     const sit = !!opt.sit, P = [];
+    const st = opt.style || 'dad', isDad = st === 'dad';   // dad | mom | aunt | kid | man
     const b = (x, y, z, w, h, d, c, pat, r) => P.push({ o: [x, y + h / 2, z], s: [w, h, d], c, pat: pat || 0, r: r || 0 });
     let hip;                                    // height of the hips
     if (!sit) {
@@ -432,6 +433,7 @@ const World = (function () {
       b(-0.11, 0.09, 0.44, 0.17, 0.38, 0.19, pants, 7); b(0.11, 0.09, 0.44, 0.17, 0.38, 0.19, pants, 7); // shins (vertical)
       b(-0.105, 0.42, 0.18, 0.19, 0.18, 0.56, pants, 7); b(0.105, 0.42, 0.18, 0.19, 0.18, 0.56, pants, 7); // thighs (forward)
     }
+    if (opt.dress && !sit) b(0, 0.42, 0.01, 0.46, 0.55, 0.3, opt.dress, 7);  // skirt / dress
     const lean = sit ? 0.06 : 0.02;             // slumped, tired posture
     const T = hip;                              // torso base
     b(0, T - 0.02, 0, 0.44, 0.07, 0.24, C(0x2a1f18), 13);                     // belt
@@ -446,18 +448,28 @@ const World = (function () {
     // head
     const H = T + 0.69, hz = lean * 1.3;
     b(0, H, hz, 0.29, 0.31, 0.29, skin);
-    b(0, H + 0.28, hz - 0.01, 0.31, 0.08, 0.31, hair, 7); b(0, H + 0.25, hz + 0.14, 0.3, 0.04, 0.03, hair, 7); // top hair + fringe
-    b(0, H + 0.1, hz - 0.15, 0.31, 0.24, 0.03, hair, 7);                     // back hair
-    b(-0.152, H + 0.14, hz - 0.03, 0.02, 0.16, 0.22, grey, 7); b(0.152, H + 0.14, hz - 0.03, 0.02, 0.16, 0.22, grey, 7); // greying sides
+    if (opt.hair2 === 'scarf') {                                             // head scarf (hospital)
+      const sc = opt.scarf || C(0x9ab8c8);
+      b(0, H + 0.2, hz - 0.01, 0.32, 0.15, 0.32, sc, 7); b(0, H + 0.02, hz - 0.16, 0.32, 0.3, 0.03, sc, 7);
+      b(-0.16, H + 0.12, hz - 0.02, 0.02, 0.2, 0.26, sc, 7); b(0.16, H + 0.12, hz - 0.02, 0.02, 0.2, 0.26, sc, 7); b(0, H + 0.02, hz - 0.2, 0.08, 0.08, 0.06, sc, 7);
+    } else if (opt.hair2 === 'long') {                                       // long hair
+      b(0, H + 0.28, hz - 0.01, 0.32, 0.08, 0.32, hair, 7); b(0, H + 0.24, hz + 0.14, 0.31, 0.06, 0.03, hair, 7);
+      b(0, H - 0.3, hz - 0.15, 0.34, 0.6, 0.05, hair, 7);
+      b(-0.16, H - 0.18, hz - 0.02, 0.03, 0.48, 0.26, hair, 7); b(0.16, H - 0.18, hz - 0.02, 0.03, 0.48, 0.26, hair, 7);
+    } else {
+      b(0, H + 0.28, hz - 0.01, 0.31, 0.08, 0.31, hair, 7); b(0, H + 0.25, hz + 0.14, 0.3, 0.04, 0.03, hair, 7); // top hair + fringe
+      b(0, H + 0.1, hz - 0.15, 0.31, 0.24, 0.03, hair, 7);                     // back hair
+      if (isDad) { b(-0.152, H + 0.14, hz - 0.03, 0.02, 0.16, 0.22, grey, 7); b(0.152, H + 0.14, hz - 0.03, 0.02, 0.16, 0.22, grey, 7); } // greying sides
+    }
     b(-0.155, H + 0.1, hz + 0.01, 0.03, 0.08, 0.06, skinD); b(0.155, H + 0.1, hz + 0.01, 0.03, 0.08, 0.06, skinD);     // ears
     const fz = hz + 0.146;
     b(-0.065, H + 0.17, fz, 0.06, 0.03, 0.006, C(0xf0ece4)); b(0.065, H + 0.17, fz, 0.06, 0.03, 0.006, C(0xf0ece4)); // eye whites
     b(-0.065, H + 0.172, fz + 0.004, 0.026, 0.026, 0.004, C(0x2a1a10)); b(0.065, H + 0.172, fz + 0.004, 0.026, 0.026, 0.004, C(0x2a1a10)); // pupils
-    b(-0.065, H + 0.15, fz, 0.06, 0.015, 0.004, C(0xa87458)); b(0.065, H + 0.15, fz, 0.06, 0.015, 0.004, C(0xa87458));    // tired eye bags
+    if (isDad || st === 'mom') { b(-0.065, H + 0.15, fz, 0.06, 0.015, 0.004, C(0xa87458)); b(0.065, H + 0.15, fz, 0.06, 0.015, 0.004, C(0xa87458)); } // tired eye bags
     b(-0.068, H + 0.21, fz, 0.075, 0.016, 0.008, hair, 0, -0.12); b(0.068, H + 0.21, fz, 0.075, 0.016, 0.008, hair, 0, 0.12); // brows (sad)
     b(0, H + 0.1, fz + 0.015, 0.04, 0.07, 0.035, skinD);                      // nose
     b(0, H + 0.055, fz, 0.08, 0.014, 0.006, C(0x7a4a3a));                     // mouth
-    if (opt.beard !== false) {                                                // stubble
+    if (isDad && opt.beard !== false) {                                       // stubble
       const stub = C(0xa27c62);
       b(0, H + 0.005, fz - 0.003, 0.25, 0.04, 0.008, stub, 7); b(-0.1, H + 0.03, fz - 0.003, 0.05, 0.06, 0.008, stub, 7); b(0.1, H + 0.03, fz - 0.003, 0.05, 0.06, 0.008, stub, 7);
       b(-0.1, H - 0.005, hz + 0.05, 0.08, 0.02, 0.18, stub, 7); b(0.1, H - 0.005, hz + 0.05, 0.08, 0.02, 0.18, stub, 7);
@@ -469,7 +481,7 @@ const World = (function () {
     if (!sit) {
       b(-0.31, sh - 0.6, lean, 0.11, 0.27, 0.12, skin); b(0.31, sh - 0.6, lean, 0.11, 0.27, 0.12, skin);   // forearms
       b(-0.31, sh - 0.71, lean + 0.01, 0.1, 0.11, 0.1, skin); b(0.31, sh - 0.71, lean + 0.01, 0.1, 0.11, 0.1, skin); // hands
-      b(-0.31, sh - 0.66, lean + 0.06, 0.03, 0.02, 0.01, C(0xd8b050), 13);   // wedding ring
+      if (isDad || st === 'mom') b(-0.31, sh - 0.66, lean + 0.06, 0.03, 0.02, 0.01, C(0xd8b050), 13);   // wedding ring
     } else {
       b(-0.27, sh - 0.4, 0.2, 0.1, 0.09, 0.3, skin); b(0.27, sh - 0.4, 0.2, 0.1, 0.09, 0.3, skin);       // forearms resting on thighs
       b(-0.22, sh - 0.42, 0.38, 0.09, 0.07, 0.09, skinD); b(0.22, sh - 0.42, 0.38, 0.09, 0.07, 0.09, skinD); // hands

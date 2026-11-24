@@ -178,7 +178,8 @@
     say: (w, t) => dialog(w, t), narr: t => dialog('', t, 'narr'), think: t => dialog('You (thinking)', t, 'think'),
     choose, wait, fade, tint, overlay, qte, notify,
     sfx: n => Sound[n] && Sound[n](), mood: m => Sound.setMood(m),
-    look: (e, t) => { camOverride = { eye: e, target: t }; }, dad: showDad, hideDad,
+    look: (e, t) => { camTween = null; camOverride = { eye: e, target: t }; }, dad: showDad, hideDad,
+    scene: n => playScene(n), beat: n => BEATS[n] && BEATS[n](), flash: () => flashWhite(), letterbox, cam: (e, t, ms) => camMove(e, t, ms),
     placePlayerForArrival() { camOverride = { eye: [2.5, 1.5, 15.6], target: [2.5, 1.45, 19.2] }; },
     showPhoto(drawn) { const p = overlay(`<h2 class="ot">The family photo</h2><canvas id="phc" width="480" height="360"></canvas>`, 'Continue', 'photo'); drawPhoto($('phc'), S.pieces, drawn ? S.drawing : null, true); return p; },
   };
@@ -1058,6 +1059,163 @@
     if (!S.ended) skipTo(CFG.END, S.phase2 ? 19 : 4);
   }
 
+  // ======== CINEMATIC FLASHBACKS (Phase 2 unlock) ========
+  let camTween = null, SET = [], ANIMS = [], animT = 0;
+  const FX = {};
+  function camMove(e1, t1, ms) {
+    const cur = camOverride || { eye: camEye(), target: camEye() };
+    camTween = { e0: cur.eye.slice(), t0: cur.target.slice(), e1, t1, s: performance.now(), d: ms || 1 };
+  }
+  function camCut(e, t) { camTween = null; camOverride = { eye: e.slice(), target: t.slice() }; }
+  function tickCam() {
+    if (!camTween) return;
+    const k0 = Math.min(1, (performance.now() - camTween.s) / camTween.d), k = k0 * k0 * (3 - 2 * k0);
+    const L = (a, b) => a.map((v, i) => v + (b[i] - v) * k);
+    camOverride = { eye: L(camTween.e0, camTween.e1), target: L(camTween.t0, camTween.t1) };
+    if (k0 >= 1) camTween = null;
+  }
+  function sm(parts, extra) { const m = mw(parts, Object.assign({ indoor: true }, extra || {})); SET.push(m); return m; }
+  function sp(opt, extra) { const m = World.person(opt); Object.assign(m, extra || {}); MODELS.push(m); SET.push(m); return m; }
+  function runAnims(dt) {
+    animT += dt;
+    if (ANIMS.length) ANIMS = ANIMS.filter(a => a(dt, animT) !== false);
+    if (S && S.extraLights) for (const l of S.extraLights) {
+      l.f = (l.flicker ? 1 - l.flicker * (0.5 + 0.5 * Math.sin(animT * 13 + l.p[2]) * Math.sin(animT * 4.1)) : 1) + (l.boost || 0);
+      if (l.boost) l.boost = Math.max(0, l.boost - dt * 1.2);
+    }
+  }
+  function clearSet() {
+    for (const m of SET) { const i = MODELS.indexOf(m); if (i >= 0) MODELS.splice(i, 1); Engine.freeModel(m); }
+    SET = []; ANIMS = []; if (S) { S.extraLights = []; S.fxEnv = null; S.shake = 0; } Sound.rain(false); hideDad();
+  }
+  const L = (x, y, z, col, i, r, flicker) => ({ p: [x, y, z], c: C(col), i, r, flicker: flicker || 0, f: 1 });
+
+  function buildHospital() {
+    const W = C(0xa9c2b4), Fl = C(0xd8dcd6), MET = C(0xb8bcc0);
+    sm([pt(-64, -0.05, -4, -56, 0, 4, Fl, 2), pt(-64, 2.9, -4, -56, 3.0, 4, C(0xe8eae6)),
+      pt(-64.1, 0, -4.1, -62.6, 2.9, -4, W), pt(-60.8, 0, -4.1, -56, 2.9, -4, W), pt(-62.6, 0, -4.1, -60.8, 1.0, -4, W), pt(-62.6, 2.2, -4.1, -60.8, 2.9, -4, W),
+      pt(-62.6, 1.0, -4.05, -60.8, 2.2, -4.0, [1, 1, 1], 8), pt(-62.7, 0.95, -4.0, -60.7, 1.0, -3.85, C(0xe6e6e0)),
+      pt(-64.1, 0, 4, -56, 2.9, 4.1, W), pt(-64.1, 0, -4, -64, 2.9, 4, W), pt(-56, 0, -4, -55.9, 2.9, 4, W),
+      pt(-64, 0, -3.99, -56, 0.12, -3.97, C(0xc8d0cc)), pt(-63.99, 0, -4, -63.97, 0.12, 4, C(0xc8d0cc)),
+      pt(-61, 2.85, -1.6, -59, 2.9, -0.4, C(0xf4f8ff), 0, { em: 1 }),
+      // bed
+      pt(-60.55, 0.45, -2.1, -59.45, 0.55, 0.3, MET, 13), pt(-60.55, 0.55, -2.05, -59.45, 0.62, 0.25, C(0xf2f4f4), 7),
+      pt(-60.56, 0.45, -2.16, -59.44, 1.15, -2.1, MET, 13), pt(-60.56, 0.45, 0.3, -59.44, 0.85, 0.34, MET, 13),
+      pt(-60.6, 0.62, -1.6, -60.57, 0.85, -0.2, MET, 13), pt(-59.43, 0.62, -1.6, -59.4, 0.85, -0.2, MET, 13),
+      ...[[-60.5, -2.05], [-59.5, -2.05], [-60.5, 0.25], [-59.5, 0.25]].map(([x, z]) => pt(x - 0.03, 0, z - 0.03, x + 0.03, 0.45, z + 0.03, MET, 13)),
+      pt(-60.4, 0.62, -2.05, -59.6, 0.76, -1.62, C(0xffffff), 7),
+      pt(-60.52, 0.62, -0.95, -59.48, 0.98, 0.28, C(0xe4ecf0), 7), pt(-60.53, 0.96, -1.0, -59.47, 1.0, -0.9, C(0xc8d8e4), 7),
+      // IV stand + bag
+      pt(-60.86, 0, -2.33, -60.82, 1.95, -2.29, MET, 13), pt(-61.0, 0, -2.45, -60.7, 0.04, -2.17, MET, 13),
+      pt(-60.94, 1.55, -2.36, -60.76, 1.85, -2.26, C(0xdff0ff), 19, { a: 0.6 }), pt(-60.86, 0.75, -2.3, -60.85, 1.55, -2.29, C(0xdff0ff), 0, { a: 0.6 }),
+      // monitor
+      pt(-61.25, 0, -2.65, -61.15, 1.25, -2.55, MET, 13), pt(-61.45, 1.25, -2.62, -60.95, 1.6, -2.56, C(0x222428), 13), pt(-61.42, 1.28, -2.555, -60.98, 1.57, -2.55, C(0x0c1a12), 0, { em: 1 }),
+      // bedside table, flowers, chair, curtain
+      pt(-61.4, 0, -1.3, -60.9, 0.7, -0.8, C(0xd8d4c8), 12), pt(-61.25, 0.7, -1.15, -61.05, 0.9, -0.95, C(0x9ac0d0), 19, { a: 0.7 }),
+      ...[0xf0e060, 0xf09090, 0xffffff, 0xe07060].map((c, i) => pt(-61.2 + (i % 2) * 0.08, 0.9, -1.12 + Math.floor(i / 2) * 0.08, -61.12 + (i % 2) * 0.08, 1.02, -1.04 + Math.floor(i / 2) * 0.08, C(c))),
+      pt(-58.6, 0.42, 0.6, -58.1, 0.47, 1.1, C(0x5a7a8a), 7), pt(-58.6, 0.47, 1.05, -58.1, 0.95, 1.1, C(0x5a7a8a), 7), pt(-58.58, 0, 0.62, -58.12, 0.42, 1.08, MET, 13),
+      pt(-63.9, 0.1, 1.5, -62.4, 2.7, 1.56, C(0x9ab0c8), 7), pt(-63.95, 2.72, 1.5, -57.5, 2.75, 1.56, MET, 13),
+    ]);
+    FX.line = sm([pt(-61.38, 1.42, -2.548, -61.02, 1.43, -2.545, C(0x40ff80), 0, { em: 1 })]);
+    FX.mom = sp({ style: 'mom', hair2: 'scarf', shirt: C(0xa8c8dc), pants: C(0xa8c8dc), skin: C(0xd8b090), x: -60, y: 0.76, z: 0.05 }, { pitch: -Math.PI / 2 });
+    FX.kid = sp({ style: 'kid', shirt: C(0xf0c23a), pants: C(0x3b5a8a), hair: C(0x3a2418), x: -59.05, z: -1.2, rot: -Math.PI / 2 }, { scale: 0.62 });
+    S.extraLights = [L(-60, 2.6, -1, 0xdfefff, 0.85, 8), L(-61.1, 1.3, -1.0, 0xffd8a0, 0.7, 3.5), L(-61.7, 1.6, -3.5, 0x6080c0, 0.4, 4)];
+    S.fxEnv = { time: 1300, tint: [1.06, 0.98, 0.86], expo: 1.05 };
+    let beepT = 0;
+    ANIMS.push(dt => { beepT += dt; if (beepT > 0.95) { beepT = 0; Sound.beep(); FX.line.pos[1] += 0.06; } else if (beepT > 0.12 && FX.line.pos[1] !== FX.line._y) FX.line.pos[1] = FX.line._y; });
+    FX.line._y = FX.line.pos[1];
+    camCut([-57.0, 1.65, 3.0], [-60, 0.9, -1.2]); camMove([-58.0, 1.45, 1.6], [-60, 0.85, -1.3], 9000);
+    Sound.setMood('sad');
+  }
+  function buildFuneral() {
+    sm([pt(-85, -0.08, 35, -35, -0.02, 85, C(0x4a5e3a), 4), pt(-60.6, -0.03, 60.5, -59.4, 0.0, 72, C(0x8a8478), 10)], { indoor: false });
+    for (let i = 0; i < 40; i++) { const x = -78 + (i % 10) * 3.6 + World.rnd(), z = 44 + Math.floor(i / 10) * 3.2; if (Math.abs(x + 60) < 6) continue; sm([pt(x - 0.3, 0, z - 0.1, x + 0.3, 0.7 + World.rnd() * 0.4, z + 0.1, C(0x7a7a76), 10)], { indoor: false }); }
+    [[-68, 66], [-51, 63], [-70, 55], [-49, 52]].forEach(([x, z]) => sm([pt(x - 0.25, 0, z - 0.25, x + 0.25, 3, z + 0.25, C(0x3a2a20), 10), pt(x - 2, 2.6, z - 2, x + 2, 5.5, z + 2, C(0x26381e), 4)], { indoor: false }));
+    const WD = C(0x3a2216), GOLD = C(0xb89a50);
+    sm([pt(-61.2, 0, 59.6, -58.8, 0.5, 60.4, C(0x2a2a2a), 7), pt(-61.05, 0.5, 59.7, -58.95, 1.05, 60.3, WD, 12), pt(-61.08, 1.05, 59.68, -58.92, 1.1, 60.32, C(0x4a2c1c), 12),
+      pt(-61.06, 0.75, 60.3, -58.94, 0.8, 60.31, GOLD, 13), pt(-61.06, 0.75, 59.69, -58.94, 0.8, 59.7, GOLD, 13),
+      ...Array.from({ length: 16 }, (_, i) => { const x = -60.5 + (i % 8) * 0.13, z = 59.85 + Math.floor(i / 8) * 0.18; return pt(x, 1.1, z, x + 0.12, 1.2 + (i % 3) * 0.03, z + 0.14, C([0xffffff, 0xf2c0c8, 0xe8e0d0, 0xd84860][i % 4]), 7); }),
+      pt(-62.2, 0, 60.62, -62.15, 1.0, 60.67, WD), pt(-61.65, 0, 60.62, -61.6, 1.0, 60.67, WD),
+      pt(-62.25, 1.0, 60.55, -61.55, 1.75, 60.6, C(0x1a1410), 12), pt(-62.18, 1.07, 60.6, -61.62, 1.68, 60.605, C(0xf2e6c8), 0, { em: 1 }),
+      pt(-62.0, 1.2, 60.605, -61.8, 1.46, 60.61, C(0xe0b08a), 0, { em: 1 }), pt(-62.05, 1.4, 60.604, -61.75, 1.58, 60.608, C(0x3a2418), 0, { em: 1 }), pt(-62.06, 1.12, 60.604, -61.74, 1.24, 60.608, C(0xd36a7a), 0, { em: 1 }),
+      pt(-61.7, 1.55, 60.61, -61.55, 1.75, 60.615, C(0x101010)),
+    ], { indoor: false });
+    const BLACK = C(0x17171b), BLK2 = C(0x222226);
+    const mourners = [[-61.4, 62.6, 'man'], [-58.4, 62.7, 'aunt'], [-62.2, 63.6, 'man'], [-57.6, 63.4, 'man'], [-60.9, 63.9, 'aunt'], [-59.2, 64.0, 'man']];
+    mourners.forEach(([x, z, st], i) => {
+      sp({ style: st, hair2: st === 'aunt' ? 'long' : undefined, dress: st === 'aunt' ? BLACK : undefined, shirt: BLACK, pants: BLK2, hair: C([0x2b2119, 0x4a3a2a, 0x1a1a1a][i % 3]), x, z, rot: Math.PI + (World.rnd() - 0.5) * 0.3 }, { indoor: false });
+      if (i % 2 === 0) sm([pt(x - 0.02, 0.9, z - 0.02, x + 0.02, 2.05, z + 0.02, C(0x333333)), pt(x - 0.55, 2.05, z - 0.55, x + 0.55, 2.12, z + 0.55, C(0x101012), 13)], { indoor: false });
+    });
+    FX.dad = sp({ style: 'dad', shirt: BLACK, pants: BLK2, x: -59.6, z: 62.2, rot: Math.PI }, { indoor: false });
+    FX.kid = sp({ style: 'kid', shirt: BLACK, pants: BLK2, hair: C(0x3a2418), x: -59.6, z: 61.98, rot: Math.PI }, { indoor: false, scale: 0.62 });
+    FX.aunt = sp({ style: 'aunt', hair2: 'long', dress: BLACK, shirt: BLACK, pants: BLK2, hair: C(0x5a3a28), x: -60.45, z: 62.3, rot: Math.PI - 0.6 }, { indoor: false });
+    sm([pt(-60.67, 0.9, 62.38, -60.63, 2.3, 62.42, C(0x333333)), pt(-61.25, 2.3, 61.95, -60.1, 2.36, 63.0, C(0x101012), 13)], { indoor: false });
+    // rain: two stacked layers that scroll down
+    const drops = [];
+    for (let i = 0; i < 260; i++) { const x = -70 + World.rnd() * 20, z = 54 + World.rnd() * 18, y = World.rnd() * 6; drops.push(pt(x, y, z, x + 0.012, y + 0.32, z + 0.012, C(0xc8d0dc), 0, { a: 0.35 })); }
+    const r1 = sm(drops, { indoor: false }), r2 = sm(drops.map(p => Object.assign({}, p)), { indoor: false });
+    const y0 = r1.pos[1];
+    ANIMS.push((dt, t) => { const o = -((t * 9) % 6); r1.pos[1] = y0 + o; r2.pos[1] = y0 + o + 6; });
+    S.extraLights = [];
+    S.fxEnv = { time: 760, tint: [0.9, 0.94, 1.0], skyHor: [0.5, 0.53, 0.58], skyTop: [0.34, 0.37, 0.43], sunCol: [0.22, 0.23, 0.26], ambOut: [0.3, 0.32, 0.36], fog: [0.48, 0.5, 0.54], fogN: 5, fogF: 40, expo: 1.0, night: 0 };
+    Sound.rain(true);
+    camCut([-54.5, 2.4, 71], [-60, 1.0, 60.5]); camMove([-56.8, 1.8, 67.2], [-60, 1.0, 60.8], 9000);
+  }
+  function buildBurning() {
+    showDad({ x: 1.45, z: 12.9, rot: -Math.PI / 2 });
+    FX.bottle = sm([pt(1.4, 0.74, 13.17, 1.47, 0.97, 13.24, C(0x2f5a2a), 19), pt(1.42, 0.97, 13.19, 1.45, 1.05, 13.22, C(0x2f5a2a), 19)]);
+    FX.kid = sp({ style: 'kid', shirt: C(0xf0c23a), pants: C(0x3b5a8a), hair: C(0x3a2418), x: 3.9, z: 12.95, rot: -Math.PI / 2 }, { scale: 0.62 });
+    sm([pt(1.7, 0, 12.2, 1.85, 0.01, 12.32, C(0xf4efe2), 0, { em: 1 }), pt(1.9, 0, 12.5, 2.04, 0.01, 12.62, C(0xf4efe2), 0, { em: 1, r: 0.5 }), pt(1.6, 0, 12.6, 1.74, 0.01, 12.7, C(0xf4efe2), 0, { em: 1, r: 1 })]);
+    S.extraLights = [L(0.95, 0.6, 12.8, 0xff7a30, 2.0, 8, 0.35)];
+    S.fxEnv = { time: 1380, tint: [1.1, 0.93, 0.8], expo: 1.1 };
+    camCut([5.0, 1.2, 14.2], [1.3, 1.05, 12.8]); camMove([4.6, 1.15, 13.95], [1.3, 1.05, 12.8], 6000);
+    Sound.setMood('tense');
+  }
+  function throwPhotos(n) {
+    for (let i = 0; i < n; i++) {
+      const card = sm([pt(-0.07, 0, -0.09, 0.07, 0.008, 0.09, C(0xf4efe2), 0, { em: 1 })]);
+      const a = [1.25, 1.25, 12.62], b = [0.32, 0.3, 12.8]; card.visible = false; let t = -i * 0.45;
+      ANIMS.push(dt => {
+        t += dt; if (t < 0) return; card.visible = true;
+        const k = Math.min(1, t / 0.55);
+        card.pos = [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k + Math.sin(k * Math.PI) * 0.35, a[2] + (b[2] - a[2]) * k];
+        card.rotY += dt * 9; card.pitch = k * 2;
+        if (t > 0.55 && !card._lit) { card._lit = 1; card.parts[0].c = C(0xff8a30); card.dirty = true; Sound.whoosh(); if (S.extraLights[0]) S.extraLights[0].boost = 1.4; }
+        if (t > 1.0) { card.visible = false; return false; }
+      });
+    }
+  }
+  const BEATS = {
+    momFace: () => camMove([-60.0, 1.55, -0.45], [-60, 0.86, -1.72], 2600),
+    kid: () => camMove([-60.75, 1.35, -2.45], [-59.05, 0.8, -1.0], 2200),
+    hug: () => {
+      let t = 0; const k = FX.kid;
+      ANIMS.push(dt => { t += dt; const q = Math.min(1, t / 1.2); k.pos[0] = -59.05 - 0.38 * q; k.pos[2] = -1.2 - 0.25 * q; k.pitch = 0.45 * q; k.pos[1] = 0.18 * q; return q < 1; });
+      camMove([-57.4, 1.45, 1.2], [-59.8, 0.8, -1.3], 200); setTimeout(() => camMove([-58.5, 1.25, 0.1], [-59.8, 0.85, -1.4], 6000), 250);
+      Sound.setMood('sad');
+    },
+    kidPov: () => camMove([-59.2, 0.85, 62.6], [-60, 0.95, 60.1], 2500),
+    dadClose: () => camMove([-59.35, 1.05, 60.95], [-59.6, 1.55, 62.2], 2200),
+    aunt: () => camMove([-60.05, 1.62, 60.95], [-60.0, 1.55, 62.3], 2500),
+    funeralWide: () => camMove([-60, 5.0, 71], [-60, 0.4, 60.2], 6000),
+    throw: () => throwPhotos(3),
+    turn: () => {
+      const d = dadModel; let t = 0;
+      ANIMS.push(dt => { t += dt; const q = Math.min(1, t / 1.3); d.rotY = -Math.PI / 2 + Math.PI * Math.min(1, q * 2); d.pos[0] = 1.45 + 1.15 * Math.max(0, (q - 0.3) / 0.7); FX.bottle.pos[0] = d.pos[0] - 0.05; FX.bottle.pos[2] = 12.6; return q < 1; });
+      camMove([4.3, 0.98, 13.4], [2.6, 1.62, 12.92], 1300); S.shake = 0.01; Sound.thud();
+    },
+  };
+  async function playScene(name) {
+    await fade(true, 650);
+    clearSet();
+    if (name === 'hospital') buildHospital(); else if (name === 'funeral') buildFuneral(); else if (name === 'burning') buildBurning();
+    else camCut([38.2, 0.7, 0.55], [38.2, 0.95, -1.3]);
+    await wait(120);
+    await fade(false, 900);
+  }
+  function flashWhite() { const f = $('flash'); f.style.transition = 'none'; f.style.opacity = '1'; Sound.whoosh(); setTimeout(() => { f.style.transition = 'opacity 1.2s'; f.style.opacity = '0'; }, 60); return wait(300); }
+  function letterbox(on) { $('lbTop').classList.toggle('on', on); $('lbBot').classList.toggle('on', on); }
+
   // ======== PHASE 2 PRELUDE ========
   async function preludeGrave() {
     await runScene(async () => {
@@ -1192,6 +1350,7 @@
     });
   }
   function goMenu() {
+    if (S) clearSet(); letterbox(false); camTween = null;
     Sound.stopAll(); Sound.setMood('calm'); camOverride = null;
     for (const m of MODELS) Engine.freeModel(m); for (const m of OVERLAY) Engine.freeModel(m);
     S = null; MODELS = []; ENT = []; OVERLAY = []; dadModel = null;
@@ -1324,7 +1483,7 @@
     for (const l of World.lights) l.f = l.flicker ? 1 - l.flicker * (0.5 + 0.5 * Math.sin(envClock * 11 + l.p[0]) * Math.sin(envClock * 3.7)) * (Math.random() < 0.02 ? 2 : 1) : 1;
     if (!S) return;
     for (const m of MODELS) if (m._vis) m.visible = m._vis();
-    updateSmoke(dt); updateHeld(dt); updateClocks();
+    updateSmoke(dt); updateHeld(dt); updateClocks(); runAnims(dt);
     if (MODE !== 'play') return;
     move(dt);
     updatePhysics(dt);
@@ -1468,6 +1627,7 @@
     const ambOut = [0.12 + 0.35 * day, 0.13 + 0.38 * day, 0.18 + 0.4 * day];
     const ambIn = [0.07 + 0.1 * day, 0.065 + 0.09 * day, 0.07 + 0.08 * day];
     const lights = World.lights.map(L => Object.assign({}, L, { i: L.i * (S && S.prelude ? 0.55 : (1.0 + 0.25 * night)) * 1.25 }));
+    if (S && S.extraLights && S.extraLights.length) lights.push(...S.extraLights);
     if (S && ((S.cake.stage === 'ready' && S.cake.late > 20) || S.fireLevel)) lights.unshift({ p: [19.3, 1.2, 10.9], c: [1, 0.45, 0.1], i: 1.8 + Math.random() * 0.6, r: 8, f: 1 });
     return { skyTop: top, skyHor: hor, ambIn, ambOut, sunDir: sd, sunCol, lights, fog: [hor[0] * 0.8, hor[1] * 0.8, hor[2] * 0.85], fogN: 25, fogF: 90, win: [Math.min(1.2, hor[0] * 1.2 + 0.08), Math.min(1.2, hor[1] * 1.2 + 0.08), Math.min(1.2, hor[2] * 1.2 + 0.1)], time: envClock, expo: 1.15, night, tint: [1, 1, 1] };
   }
@@ -1483,10 +1643,12 @@
       return;
     }
     let cam;
-    if (camOverride) cam = { eye: camOverride.eye, target: camOverride.target };
+    tickCam();
+    if (camOverride) { cam = { eye: camOverride.eye, target: camOverride.target }; if (S.shake) cam.eye = cam.eye.map(v => v + (Math.random() - 0.5) * S.shake); }
     else { const e = camEye(), d = camDir(); cam = { eye: e, target: [e[0] + d[0], e[1] + d[1], e[2] + d[2]] }; }
     cam.fov = (save.settings.fov || 75) * Math.PI / 180 * 0.85;
-    const env = envFor(S.time);
+    const env = envFor(S.fxEnv && S.fxEnv.time != null ? S.fxEnv.time : S.time);
+    if (S.fxEnv) Object.assign(env, S.fxEnv);
     if (S.fireLevel === 2) { env.skyHor = [0.5, 0.15, 0.05]; env.skyTop = [0.2, 0.05, 0.03]; env.fog = [0.3, 0.12, 0.06]; env.fogN = 5; env.fogF = 45; }
     Engine.render(cam, MODELS.filter(m => !m.overlayOnly), env, camOverride ? [] : OVERLAY);
     if ($('fps').style.display !== 'none') $('fps').textContent = `${Math.round(Engine.stats.fps)} fps · ${Math.round(Engine.stats.scale * 100)}% res · ${Engine.stats.calls} draws`;

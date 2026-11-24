@@ -101,34 +101,54 @@ const Story = {
     await G.overlay(`<div class="grave"><div class="stone"><div class="gphoto">☺</div>
       <h2>${MOM_NAME}</h2><p>Beloved Wife &amp; Mother</p><p>${MOM_YEARS}</p>
       <p class="ep">"Forever in our hearts"</p><p>Rest with the angels</p></div></div>`, 'Touch the stone');
-    G.sfx('heart'); await G.wait(500); G.sfx('heart');
-    await G.narr('(EVERYTHING COMES RUSHING BACK)');
-    G.tint('flash'); G.sfx('whoosh');
+    G.sfx('heart'); await G.wait(500); G.sfx('heart'); await G.wait(600);
+    G.letterbox(true);
+    await G.flash();
+    // ---- 1. hospital ----
+    await G.scene('hospital');
     await G.narr('— Hospital room, two years ago —');
     await G.say('Young you', 'Mommy, when are you coming home?');
+    G.beat('momFace');
     await G.say('Mom', '(weak) Soon, sweetie. Very soon.');
     await G.narr('(She is crying, holding your hand.)');
     await G.say('Mom', 'I need you to promise me something...');
+    G.beat('kid');
     await G.say('Young you', 'What?');
     await G.say('Mom', "Take care of Daddy for me. He's going to be very sad.");
     await G.say('Young you', "Why would he be sad if you're coming home?");
+    G.beat('hug');
     await G.narr("(She can't answer. She just hugs you tight.)");
-    G.sfx('whoosh');
+    await G.wait(2200);
+    // ---- 2. funeral ----
+    await G.scene('funeral');
     await G.narr('— The funeral —');
+    G.beat('kidPov');
     await G.say('Young you', "Where's Mommy?");
+    G.beat('dadClose');
     await G.say('Dad', '(crying, holding you) She... she went away, buddy.');
     await G.say('Young you', 'On a trip?');
+    G.beat('aunt');
     await G.say('Aunt', "(whispering to Dad) You can't lie to him forever.");
     await G.say('Dad', "(harsh whisper) Watch me. He's too young to understand death.");
-    G.sfx('whoosh');
+    G.beat('funeralWide');
+    await G.wait(2600);
+    // ---- 3. one year ago ----
+    await G.scene('burning');
     await G.narr('— One year ago —');
+    G.beat('throw');
     await G.narr('(Dad, drunk, throwing pictures into the fireplace.)');
     await G.say('Young you', 'Dad! Stop! Those are our pictures!');
+    G.beat('throw');
     await G.say('Dad', "Looking at her HURTS! I can't... I can't do this anymore!");
+    G.beat('turn');
+    await G.wait(1400);
     await G.say('Dad', "Listen to me. Your mother is just on a long trip. A business trip. She'll come back someday. Say it!");
     await G.say('Young you', "(scared, crying) She's... on a trip...");
     await G.say('Dad', "Good. Good boy. We'll wait for her together.");
-    G.tint(null); G.sfx('thud');
+    // ---- back to the grave ----
+    await G.scene(null);
+    G.letterbox(false);
+    G.sfx('thud');
     await G.say('You', "She's dead. Mom has been dead for two years.");
     await G.say('You', 'And Dad... Dad made me forget. Made me believe the lie.');
     await G.say('You', 'The photo. I need to find the rest of the photo. To remember her. To really remember her face.');

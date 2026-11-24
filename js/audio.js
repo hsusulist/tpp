@@ -3,7 +3,7 @@
    ========================================================= */
 const Sound = (function () {
   let ctx = null, master, music, sfx, noiseBuf;
-  let mood = 'none', nextNote = 0, alarmTimer = null, fireNode = null, volume = 0.7;
+  let mood = 'none', nextNote = 0, alarmTimer = null, fireNode = null, rainNode = null, volume = 0.7;
   const SCALES = {
     calm: [220, 261.63, 293.66, 329.63, 392, 440, 523.25],
     sad: [220, 246.94, 261.63, 329.63, 349.23, 440, 493.88],
@@ -92,6 +92,17 @@ const Sound = (function () {
       if (on && !alarmTimer) alarmTimer = setInterval(() => { tone(3100, 0.18, 'square', 0.07); tone(3100, 0.18, 'square', 0.07, 0.25); }, 700);
       if (!on && alarmTimer) { clearInterval(alarmTimer); alarmTimer = null; }
     },
+    beep() { tone(1046, 0.13, 'sine', 0.07); },
+    rain(on) {
+      if (!ctx) return;
+      if (on && !rainNode) {
+        const s = ctx.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
+        const f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 900;
+        const g = ctx.createGain(); g.gain.value = 0.11;
+        s.connect(f); f.connect(g); g.connect(sfx); s.start(); rainNode = s;
+      }
+      if (!on && rainNode) { rainNode.stop(); rainNode = null; }
+    },
     fire(on) {
       if (!ctx) return;
       if (on && !fireNode) {
@@ -108,6 +119,6 @@ const Sound = (function () {
     init, update, ...S,
     setMood(m) { mood = m; if (ctx) nextNote = ctx.currentTime + 0.3; },
     setVolume(v) { volume = v; if (master) master.gain.value = v; },
-    stopAll() { S.alarm(false); S.fire(false); },
+    stopAll() { S.alarm(false); S.fire(false); S.rain(false); },
   };
 })();
